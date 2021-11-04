@@ -1,5 +1,5 @@
 {
-  "name": "Artboard-ToC",
+  "name": "figma-artboard-toc",
   "version": "1.0.0",
   "description": "A Figma plugin that generates Table of content of all artboards on all pages",
   "main": "code.js",
