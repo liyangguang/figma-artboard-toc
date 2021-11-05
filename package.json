@@ -2,13 +2,15 @@
   "name": "figma-artboard-toc",
   "version": "1.0.0",
   "description": "A Figma plugin that generates Table of content of all artboards on all pages",
-  "main": "code.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "start": "rollup -c --watch",
+    "build": "rollup -c"
   },
-  "author": "",
+  "author": "liyangguangcn@gmail.com",
   "license": "",
   "devDependencies": {
-    "@figma/plugin-typings": "^1.38.0"
+    "@figma/plugin-typings": "^1.38.0",
+    "@rollup/plugin-typescript": "^8.3.0",
+    "rollup": "^2.59.0"
   }
 }

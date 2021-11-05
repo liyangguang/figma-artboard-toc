@@ -1,43 +1,17 @@
-// figma.currentPage.selection = nodes;
-// figma.viewport.scrollAndZoomIntoView(nodes);
+import {SUMMARY_PAGE_NAME, FONT_SIZE_BASE, INDENTATION_WIDTH, FontEnum, FONTS_MAP} from './styles';
 
-const TOC_PAGE_NAME = '_START';
 const TOC_FRAME_NAME = 'Table of contents';
-const FONT_SIZE_BASE = 14;
-const INDENTATION_WIDTH = FONT_SIZE_BASE * 1.5;
-const GAP_DISTANCE = FONT_SIZE_BASE * .5;
 
-enum FontEnum {
-  REGULAR,
-  BOLD,
-}
-
-const FONTS_MAP = new Map([
-  [FontEnum.REGULAR, { family: 'Roboto', style: 'Regular' }],
-  [FontEnum.BOLD, { family: 'Roboto', style: 'Bold' }],
-]);
-
-async function start() {
-  await Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font)));
-
-  removeOldToc();
-  renderToc();
-  figma.closePlugin();
-}
-
-function removeOldToc() {
-  const tocPage = figma.root.findChild((page) => page.name === TOC_PAGE_NAME);
-  if (!tocPage) return;
-  const tocFrame = tocPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME);
-  if (!tocFrame) return;
-  tocFrame.remove();
-}
-
-function renderToc(): void {
-  let tocPage = figma.root.findChild((page) => page.name === TOC_PAGE_NAME);
+export function renderToc(): void {
+  let tocPage = figma.root.findChild((page) => page.name === SUMMARY_PAGE_NAME);
   if (!tocPage) {
     tocPage = figma.createPage();
-    tocPage.name = TOC_PAGE_NAME;
+    tocPage.name = SUMMARY_PAGE_NAME;
+  } else {
+    const tocFrame = tocPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME);
+    if (tocFrame) {
+      tocFrame.remove();
+    }
   }
 
   tocPage.appendChild(getTocFrame());
@@ -46,7 +20,7 @@ function renderToc(): void {
 function getTocFrame(): FrameNode {
   const tocFrame = createAutoLayoutFrame(TOC_FRAME_NAME);
 
-  const pages = figma.root.children.filter((page) => page.name !== TOC_PAGE_NAME);
+  const pages = figma.root.children.filter((page) => page.name !== SUMMARY_PAGE_NAME);
   for (const page of pages) {
     const pageAutoLayoutFrame = createAutoLayoutFrame(`${page.name} page`);
     pageAutoLayoutFrame.appendChild(createTextNode(page));
@@ -61,9 +35,6 @@ function getTocFrame(): FrameNode {
     pageAutoLayoutFrame.appendChild(artboardListAutoLayoutFrame);
     tocFrame.appendChild(pageAutoLayoutFrame);
   }
-
-  // tocFrame.resize(widest, yPosition);
-
   return tocFrame;
 }
 
@@ -88,5 +59,3 @@ function createTextNode(node): TextNode {
 
   return textNode;
 }
-
-start();
