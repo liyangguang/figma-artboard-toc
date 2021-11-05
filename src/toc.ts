@@ -1,38 +1,37 @@
 import {SUMMARY_PAGE_NAME, INDENTATION_WIDTH} from './styles';
-import {createAutoLayoutFrame, createTextNode, getOurPage} from './helpers';
+import {appendFrame, appendTextNode, getStartPage} from './helpers';
 
 const TOC_FRAME_NAME = 'Table of contents';
 
-export function renderToc(x: number, y: number): void {
-  const ourPage = getOurPage();
+export function renderToc(x: number, y: number): FrameNode {
+  const startPage = getStartPage();
 
-  const tocFrame = ourPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME);
+  const tocFrame = startPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME) as FrameNode;
   if (tocFrame) {
     tocFrame.remove();
   }
+  
 
-  ourPage.appendChild(getTocFrame(x, y));
+  const newTocFrame = appendFrame(startPage, TOC_FRAME_NAME, true);
+  newTocFrame.x = x;
+  newTocFrame.y = y;
+  renderTocContent(newTocFrame);
+
+  return newTocFrame;
 }
 
-function getTocFrame(x: number, y: number): FrameNode {
-  const tocFrame = createAutoLayoutFrame(TOC_FRAME_NAME);
-  tocFrame.x = x;
-  tocFrame.y = y;
-
+function renderTocContent(tocFrame: FrameNode): void {
   const pages = figma.root.children.filter((page) => page.name !== SUMMARY_PAGE_NAME);
   for (const page of pages) {
-    const pageAutoLayoutFrame = createAutoLayoutFrame(`${page.name} page`);
-    pageAutoLayoutFrame.appendChild(createTextNode(page));
-    
-    const artboardListAutoLayoutFrame = createAutoLayoutFrame(`${page.name} artboards`);
+    const pageAutoLayoutFrame = appendFrame(tocFrame, `${page.name} page`, true);
+    appendTextNode(pageAutoLayoutFrame, page.name, {type: 'NODE', value: page.id}, true);
+
+    const artboardListAutoLayoutFrame = appendFrame(pageAutoLayoutFrame, `${page.name} artboards`, true);
     artboardListAutoLayoutFrame.paddingLeft = INDENTATION_WIDTH;
+    // TODO: More flexible filtering: include, exclude with name of the frame (name starts with some emojis)
     for (const frame of page.children.filter((node) => node.type === 'FRAME')) {
-      const artboardNode = createTextNode(frame);
+      const artboardNode = appendTextNode(artboardListAutoLayoutFrame, frame.name, {type: 'NODE', value: frame.id});
       artboardNode.x = INDENTATION_WIDTH;
-      artboardListAutoLayoutFrame.appendChild(artboardNode);
     }
-    pageAutoLayoutFrame.appendChild(artboardListAutoLayoutFrame);
-    tocFrame.appendChild(pageAutoLayoutFrame);
   }
-  return tocFrame;
 }

@@ -9,6 +9,6 @@ export enum FontEnum {
 }
 
 export const FONTS_MAP = new Map<FontEnum, FontName>([
-  [FontEnum.REGULAR, { family: 'Roboto', style: 'Regular' }],
-  [FontEnum.BOLD, { family: 'Roboto', style: 'Bold' }],
+  [FontEnum.REGULAR, {family: 'Roboto', style: 'Regular'}],
+  [FontEnum.BOLD, {family: 'Roboto', style: 'Bold'}],
 ]);
