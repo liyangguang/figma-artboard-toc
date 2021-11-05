@@ -1,9 +1,11 @@
 // figma.currentPage.selection = nodes;
 // figma.viewport.scrollAndZoomIntoView(nodes);
 
-const TOC_PAGE_NAME = 'Table of contents';
+const TOC_PAGE_NAME = '_START';
+const TOC_FRAME_NAME = 'Table of contents';
 const FONT_SIZE_BASE = 14;
-const INDENTATION_WIDTH = 20;
+const INDENTATION_WIDTH = FONT_SIZE_BASE * 1.5;
+const GAP_DISTANCE = FONT_SIZE_BASE * .5;
 
 enum FontEnum {
   REGULAR,
@@ -18,8 +20,17 @@ const FONTS_MAP = new Map([
 async function start() {
   await Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font)));
 
+  removeOldToc();
   renderToc();
   figma.closePlugin();
+}
+
+function removeOldToc() {
+  const tocPage = figma.root.findChild((page) => page.name === TOC_PAGE_NAME);
+  if (!tocPage) return;
+  const tocFrame = tocPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME);
+  if (!tocFrame) return;
+  tocFrame.remove();
 }
 
 function renderToc(): void {
@@ -33,31 +44,38 @@ function renderToc(): void {
 }
 
 function getTocFrame(): FrameNode {
-  const tocFrame = figma.createFrame();
-  tocFrame.name = new Date().toLocaleString();  // Not sure what else to use for the name
+  const tocFrame = createAutoLayoutFrame(TOC_FRAME_NAME);
 
-  let yPosition = 0;
-  let widest = 0;
   const pages = figma.root.children.filter((page) => page.name !== TOC_PAGE_NAME);
   for (const page of pages) {
-    const node = createTextNode(page);
-    node.y = yPosition;
-    tocFrame.appendChild(node);
-    yPosition += node.height;
-    widest = Math.max(node.width, widest);
+    const pageAutoLayoutFrame = createAutoLayoutFrame(`${page.name} page`);
+    pageAutoLayoutFrame.appendChild(createTextNode(page));
+    
+    const artboardListAutoLayoutFrame = createAutoLayoutFrame(`${page.name} artboards`);
+    artboardListAutoLayoutFrame.paddingLeft = INDENTATION_WIDTH;
     for (const frame of page.children.filter((node) => node.type === 'FRAME')) {
-      const node = createTextNode(frame);
-      node.y = yPosition;
-      tocFrame.appendChild(node);
-      yPosition += node.height;
-      node.x = INDENTATION_WIDTH;
-      widest = Math.max(node.width + INDENTATION_WIDTH, widest);
+      const artboardNode = createTextNode(frame);
+      artboardNode.x = INDENTATION_WIDTH;
+      artboardListAutoLayoutFrame.appendChild(artboardNode);
     }
+    pageAutoLayoutFrame.appendChild(artboardListAutoLayoutFrame);
+    tocFrame.appendChild(pageAutoLayoutFrame);
   }
 
-  tocFrame.resize(widest, yPosition + FONT_SIZE_BASE);
+  // tocFrame.resize(widest, yPosition);
 
   return tocFrame;
+}
+
+function createAutoLayoutFrame(name) {
+  const frame = figma.createFrame();
+  frame.name = name;
+  frame.layoutMode = 'VERTICAL';
+  frame.counterAxisSizingMode = 'AUTO';
+  frame.itemSpacing = FONT_SIZE_BASE * .5;
+  frame.verticalPadding = FONT_SIZE_BASE * .4;
+  frame.horizontalPadding = FONT_SIZE_BASE * .8;
+  return frame
 }
 
 function createTextNode(node): TextNode {
@@ -65,7 +83,7 @@ function createTextNode(node): TextNode {
   textNode.hyperlink = { type: 'NODE', value: node.id };
   textNode.textDecoration = 'UNDERLINE';
   textNode.characters = node.name;
-  textNode.fontSize = FONT_SIZE_BASE * (node.type === 'PAGE' ? 1.5 : 1);
+  textNode.fontSize = FONT_SIZE_BASE * (node.type === 'PAGE' ? 1.2 : 1);
   textNode.fontName = FONTS_MAP.get(node.type === 'PAGE' ? FontEnum.BOLD : FontEnum.REGULAR);
 
   return textNode;
