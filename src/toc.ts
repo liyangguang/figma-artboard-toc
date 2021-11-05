@@ -1,24 +1,23 @@
-import {SUMMARY_PAGE_NAME, FONT_SIZE_BASE, INDENTATION_WIDTH, FontEnum, FONTS_MAP} from './styles';
+import {SUMMARY_PAGE_NAME, INDENTATION_WIDTH} from './styles';
+import {createAutoLayoutFrame, createTextNode, getOurPage} from './helpers';
 
 const TOC_FRAME_NAME = 'Table of contents';
 
-export function renderToc(): void {
-  let tocPage = figma.root.findChild((page) => page.name === SUMMARY_PAGE_NAME);
-  if (!tocPage) {
-    tocPage = figma.createPage();
-    tocPage.name = SUMMARY_PAGE_NAME;
-  } else {
-    const tocFrame = tocPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME);
-    if (tocFrame) {
-      tocFrame.remove();
-    }
+export function renderToc(x: number, y: number): void {
+  const ourPage = getOurPage();
+
+  const tocFrame = ourPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME);
+  if (tocFrame) {
+    tocFrame.remove();
   }
 
-  tocPage.appendChild(getTocFrame());
+  ourPage.appendChild(getTocFrame(x, y));
 }
 
-function getTocFrame(): FrameNode {
+function getTocFrame(x: number, y: number): FrameNode {
   const tocFrame = createAutoLayoutFrame(TOC_FRAME_NAME);
+  tocFrame.x = x;
+  tocFrame.y = y;
 
   const pages = figma.root.children.filter((page) => page.name !== SUMMARY_PAGE_NAME);
   for (const page of pages) {
@@ -36,26 +35,4 @@ function getTocFrame(): FrameNode {
     tocFrame.appendChild(pageAutoLayoutFrame);
   }
   return tocFrame;
-}
-
-function createAutoLayoutFrame(name) {
-  const frame = figma.createFrame();
-  frame.name = name;
-  frame.layoutMode = 'VERTICAL';
-  frame.counterAxisSizingMode = 'AUTO';
-  frame.itemSpacing = FONT_SIZE_BASE * .5;
-  frame.verticalPadding = FONT_SIZE_BASE * .4;
-  frame.horizontalPadding = FONT_SIZE_BASE * .8;
-  return frame
-}
-
-function createTextNode(node): TextNode {
-  const textNode = figma.createText();
-  textNode.hyperlink = { type: 'NODE', value: node.id };
-  textNode.textDecoration = 'UNDERLINE';
-  textNode.characters = node.name;
-  textNode.fontSize = FONT_SIZE_BASE * (node.type === 'PAGE' ? 1.2 : 1);
-  textNode.fontName = FONTS_MAP.get(node.type === 'PAGE' ? FontEnum.BOLD : FontEnum.REGULAR);
-
-  return textNode;
 }
