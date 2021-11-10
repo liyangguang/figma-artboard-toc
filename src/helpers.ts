@@ -1,10 +1,12 @@
 import {FONT_SIZE_BASE, FontEnum, FONTS_MAP} from './STATIC_DATA';
 
-export function createPage(name: string, checkExisting = true) {
-  if (checkExisting && findChildByName(name)) return;
+export function createPage(name: string, checkExisting = true): PageNode {
+  const existingPage = findChildByName(name);
+  if (checkExisting && existingPage) return existingPage;
 
   const page = figma.createPage();
   page.name = name;
+  return page;
 }
 
 export function findChildByName(name: string, parent = figma.root) {
@@ -25,7 +27,7 @@ export function appendFrame(parent: FrameNode|PageNode, name: string, isAutoLayo
   return frame
 }
 
-export function appendTextNode(parent: FrameNode, name: string, linkId: string|null = null, isLargerFont = false): TextNode {
+export function appendTextNode(parent: FrameNode|PageNode, name: string, linkId: string|null = null, isLargerFont = false): TextNode {
   const textNode = figma.createText();
   textNode.characters = name.trim();
   textNode.fontSize = FONT_SIZE_BASE * (isLargerFont ? 1.2 : 1);

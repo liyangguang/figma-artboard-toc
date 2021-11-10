@@ -22,6 +22,7 @@ export function renderCover(): FrameNode {
 
 function updateLastUpdated(frame: FrameNode): void {
   const textNode = frame.findChild((node) => node.name === LAST_UPDATED_NAME) as TextNode || appendTextNode(frame, LAST_UPDATED_NAME);
+  textNode.name = LAST_UPDATED_NAME;
   textNode.characters = `${LAST_UPDATED_NAME}: ${new Date().toLocaleDateString()}`;
   textNode.x = COVER_DIMENSIONS[0] - textNode.width - PADDING;
   textNode.y = COVER_DIMENSIONS[1] - textNode.height - PADDING;

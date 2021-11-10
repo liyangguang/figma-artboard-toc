@@ -15,7 +15,9 @@ export function renderToc(sectionTitles: string[]): FrameNode {
   renderTocContent(newTocFrame, sectionTitles);
 
   if (!newTocFrame.children.length) {
-    appendTextNode(newTocFrame, `All the pages are created. Now it's time to do the design! You can run the plugin again anytime to refresh the ToC and last updated.`);
+    appendTextNode(newTocFrame, 'Table of contents is empty', null, true);
+    appendTextNode(newTocFrame, `All pages are created. Now it's design time!`);
+    appendTextNode(newTocFrame, 'Run the plugin again anytime to refresh this ToC, and the last updated time in the cover.');
   }
 
   return newTocFrame;
