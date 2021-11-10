@@ -1,18 +1,28 @@
-import {FONTS_MAP, COVER_SIZE} from './styles';
+import {FONTS_MAP, TOC_PAGE_NAME} from './STATIC_DATA';
 import {renderToc} from './toc';
 import {renderCover} from './cover';
-import {getStartPage} from './helpers';
+import {createPageSections} from './page_sections';
+import {focusToPage} from './helpers';
+
+const PAGE_SECTION_TITLES = [
+  '🟢 Ready',
+  '🟣 Work in progress',
+  '🔵 Research',
+  '_🟠 Sand box',
+];
 
 (async function start() {
   await Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font)));
 
-  const startPage = getStartPage();
-  // TODO: Move this page to be the 1st in the page list sidebar
-  const coverFrame = renderCover(COVER_SIZE[0], COVER_SIZE[1]);
-  const tocFrame = renderToc(COVER_SIZE[0] + 80, 0);
-
-  figma.currentPage = startPage;
-  figma.viewport.scrollAndZoomIntoView([coverFrame, tocFrame]);
-
-  figma.closePlugin();
+  try {
+    createPageSections(PAGE_SECTION_TITLES);
+    renderCover();
+    renderToc(PAGE_SECTION_TITLES);
+  
+    focusToPage(TOC_PAGE_NAME)
+  } catch (error) {
+    console.error(error);
+  } finally {
+    figma.closePlugin();
+  }
 })();
