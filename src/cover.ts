@@ -1,25 +1,44 @@
-import {getStartPage, appendFrame, appendTextNode} from './helpers';
+import {appendFrame, appendTextNode, findChildByName} from './helpers';
+import {COVER_PAGE_NAME, TOC_PAGE_NAME} from './STATIC_DATA';
 
-const COVER_FRAME_NAME = 'Cover';
+const COVER_FRAME_NAME = 'cover';
+const LAST_UPDATED_NAME = 'Last updated';
+const COVER_DIMENSIONS = [1024, 576];
+const PADDING = 16;
 
-export function renderCover(width: number, height: number): FrameNode {
-  const startPage = getStartPage();
+export function renderCover(): FrameNode {
+  const coverPage = findChildByName(COVER_PAGE_NAME);
 
-  const coverFrame = startPage.findChild((node) => node.type === 'FRAME' && node.name === COVER_FRAME_NAME) as FrameNode;
+  let coverFrame = coverPage.findChild((node) => node.type === 'FRAME' && node.name === COVER_FRAME_NAME) as FrameNode;
   if (!coverFrame) {
-    const coverFrame = appendFrame(startPage, COVER_FRAME_NAME);
-    coverFrame.resize(width, height);
-    renderCoverFrame(coverFrame, width, height);
-    // TODO: Set it as file thumbnail
+    coverFrame = appendFrame(coverPage, COVER_FRAME_NAME);
+    coverFrame.resize(COVER_DIMENSIONS[0], COVER_DIMENSIONS[1]);
+    renderCoverFrame(coverFrame);
   }
+  updateLastUpdated(coverFrame);
+
   return coverFrame;
 }
 
-function renderCoverFrame(frame: FrameNode, width: number, height: number): void {
-  // TODO: Put some basic cover content
-  const textNode = appendTextNode(frame, 'Put a cover here');
-  textNode.fontSize = 60;
+function updateLastUpdated(frame: FrameNode): void {
+  const textNode = frame.findChild((node) => node.name === LAST_UPDATED_NAME) as TextNode || appendTextNode(frame, LAST_UPDATED_NAME);
+  textNode.name = LAST_UPDATED_NAME;
+  textNode.characters = `${LAST_UPDATED_NAME}: ${new Date().toLocaleDateString()}`;
+  textNode.x = COVER_DIMENSIONS[0] - textNode.width - PADDING;
+  textNode.y = COVER_DIMENSIONS[1] - textNode.height - PADDING;
+}
 
-  textNode.x = (width - textNode.width) / 2;
-  textNode.y = (height - textNode.height) / 2;
+function renderCoverFrame(frame: FrameNode): void {
+  const placeholderNode = appendTextNode(frame, 'Put your cover here');
+  placeholderNode.fontSize = 60;
+
+  placeholderNode.x = (COVER_DIMENSIONS[0] - placeholderNode.width) / 2;
+  placeholderNode.y = (COVER_DIMENSIONS[1] - placeholderNode.height) / 2;
+
+  const tocPage = findChildByName(TOC_PAGE_NAME);
+  if (tocPage) {
+    const tocNode = appendTextNode(frame, 'Table of contents', tocPage.id);
+    tocNode.x = COVER_DIMENSIONS[0] - tocNode.width - PADDING;
+    tocNode.y = COVER_DIMENSIONS[1] - tocNode.height * 2 - PADDING * 2;
+  }
 }

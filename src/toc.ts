@@ -1,41 +1,91 @@
-import {SUMMARY_PAGE_NAME, FONT_SIZE_BASE, INDENTATION_WIDTH} from './styles';
-import {appendFrame, appendTextNode, getStartPage} from './helpers';
+import {PAGE_NAMES_TO_IGNORE, INDENTATION_WIDTH, TOC_PAGE_NAME, PAGE_PREFIX} from './STATIC_DATA';
+import {appendFrame, appendTextNode, findChildByName} from './helpers';
 
-const TOC_FRAME_NAME = 'Table of contents';
+const TOC_FRAME_NAME = 'table of contents';
 
-export function renderToc(x: number, y: number): FrameNode {
-  const startPage = getStartPage();
+export function renderToc(sectionTitles: string[]): FrameNode {
+  const tocPage = findChildByName(TOC_PAGE_NAME);
 
-  const tocFrame = startPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME) as FrameNode;
+  const tocFrame = tocPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME) as FrameNode;
   if (tocFrame) {
     tocFrame.remove();
+  }  
+
+  const newTocFrame = appendFrame(tocPage, TOC_FRAME_NAME, true);
+  renderTocContent(newTocFrame, sectionTitles);
+
+  if (!newTocFrame.children.length) {
+    appendTextNode(newTocFrame, 'Table of contents is empty', null, true);
+    appendTextNode(newTocFrame, `All pages are created. Now it's design time!`);
+    appendTextNode(newTocFrame, 'Run the plugin again anytime to refresh this ToC, and the last updated time in the cover.');
   }
-  
-
-  const newTocFrame = appendFrame(startPage, TOC_FRAME_NAME, true);
-  newTocFrame.x = x;
-  newTocFrame.y = y;
-
-  const note = appendTextNode(newTocFrame, 'Click on items to go to pages (bold) and artboards');
-  note.fontSize = FONT_SIZE_BASE * .6;
-
-  renderTocContent(newTocFrame);
 
   return newTocFrame;
 }
 
-function renderTocContent(tocFrame: FrameNode): void {
-  const pages = figma.root.children.filter((page) => page.name !== SUMMARY_PAGE_NAME);
-  for (const page of pages) {
-    const pageAutoLayoutFrame = appendFrame(tocFrame, `${page.name} page`, true);
-    appendTextNode(pageAutoLayoutFrame, page.name, {type: 'NODE', value: page.id}, true);
+function renderTocContent(tocFrame: FrameNode, sectionTitles: string[]): void {
+  const sections = groupsPagesIntoSections(sectionTitles);
 
-    const artboardListAutoLayoutFrame = appendFrame(pageAutoLayoutFrame, `${page.name} artboards`, true);
-    artboardListAutoLayoutFrame.paddingLeft = INDENTATION_WIDTH;
-    // TODO: More flexible filtering: include, exclude with name of the frame (name starts with some emojis)
-    for (const frame of page.children.filter((node) => node.type === 'FRAME')) {
-      const artboardNode = appendTextNode(artboardListAutoLayoutFrame, frame.name, {type: 'NODE', value: frame.id});
-      artboardNode.x = INDENTATION_WIDTH;
+  for (const section of sections) {
+    if (section.title.startsWith('_')) continue;
+
+    const nonHiddenPagesInThisSection = section.pages.filter((page) => !page.name.startsWith('_'));
+    if (!nonHiddenPagesInThisSection.length) continue;
+
+    // Add section frame and title
+    const sectionFrame = appendFrame(tocFrame, `${section.title} section`, true);
+    appendTextNode(sectionFrame, section.title, null, true);
+
+    for (const page of nonHiddenPagesInThisSection) {
+      // Ignore empty page, and pages under hidden sections
+      const artboardsInThisPage = page.children.filter((node) => node.type === 'FRAME' && !node.name.startsWith('_'));
+      if (!artboardsInThisPage.length) continue;
+  
+      // Add page frame and title
+      const pageAutoLayoutFrame = appendFrame(sectionFrame, `${page.name} page`, true);
+      appendTextNode(pageAutoLayoutFrame, page.name.replace(PAGE_PREFIX, ''), page.id);
+  
+      // Add all the artboards
+      const artboardListAutoLayoutFrame = appendFrame(pageAutoLayoutFrame, `${page.name} artboards`, true);
+      artboardListAutoLayoutFrame.paddingLeft = INDENTATION_WIDTH;
+      for (const frame of artboardsInThisPage) {
+        const artboardNode = appendTextNode(artboardListAutoLayoutFrame, frame.name, frame.id);
+        artboardNode.x = INDENTATION_WIDTH;
+      }
     }
+    removeFrameWithoutChildren(sectionFrame)
+  }
+}
+
+interface PageSection {
+  title: string;
+  pages: PageNode[];
+}
+
+function groupsPagesIntoSections(sectionTitles: string[]): PageSection[] {
+  const result = [];
+  let currentSection;
+  for (const page of figma.root.children.filter((page) => !PAGE_NAMES_TO_IGNORE.includes(page.name))) {
+    if (sectionTitles.includes(page.name)) {
+      currentSection = {title: page.name, pages: []};
+      result.push(currentSection);
+      continue;
+    }
+
+    if (!currentSection) {
+      currentSection = {title: 'Ungrouped pages', pages: []};
+      result.push(currentSection);
+    }
+
+    currentSection.pages.push(page);
+  }
+  return result;
+}
+
+function removeFrameWithoutChildren(node): void {
+  if (!node) return;
+
+  if (node.children.length === 1 && node.children[0].type === 'TEXT') {
+    node.remove();
   }
 }

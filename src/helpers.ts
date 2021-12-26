@@ -1,13 +1,17 @@
-import {SUMMARY_PAGE_NAME, FONT_SIZE_BASE, FontEnum, FONTS_MAP} from './styles';
+import {FONT_SIZE_BASE, FontEnum, FONTS_MAP} from './STATIC_DATA';
 
-export function getStartPage(): PageNode {
-  const foundPage = figma.root.findChild((page) => page.name === SUMMARY_PAGE_NAME);
-  if (foundPage) return foundPage;
+export function createPage(name: string, checkExisting = true): PageNode {
+  const existingPage = findChildByName(name);
+  if (checkExisting && existingPage) return existingPage;
 
-  const newPage = figma.createPage();
-  newPage.name = SUMMARY_PAGE_NAME;
-  return newPage;
-} 
+  const page = figma.createPage();
+  page.name = name;
+  return page;
+}
+
+export function findChildByName(name: string, parent = figma.root) {
+  return parent.findChild((node) => node.name === name);
+}
 
 export function appendFrame(parent: FrameNode|PageNode, name: string, isAutoLayout = false): FrameNode {
   const frame = figma.createFrame();
@@ -23,16 +27,21 @@ export function appendFrame(parent: FrameNode|PageNode, name: string, isAutoLayo
   return frame
 }
 
-export function appendTextNode(parent: FrameNode, name: string, link: HyperlinkTarget|null = null, isLargerFont = false): TextNode {
+export function appendTextNode(parent: FrameNode|PageNode, name: string, linkId: string|null = null, isLargerFont = false): TextNode {
   const textNode = figma.createText();
-  textNode.characters = name;
+  textNode.characters = name.trim();
   textNode.fontSize = FONT_SIZE_BASE * (isLargerFont ? 1.2 : 1);
   textNode.fontName = FONTS_MAP.get(isLargerFont ? FontEnum.BOLD : FontEnum.REGULAR);
-  if (link) {
-    textNode.hyperlink = link;
+  if (linkId) {
+    textNode.hyperlink = {type: 'NODE', value: linkId};
     textNode.textDecoration = 'UNDERLINE';
   }
   parent.appendChild(textNode);
 
   return textNode;
+}
+
+export function focusToPage(name: string) {
+  figma.currentPage = findChildByName(name);
+  figma.viewport.scrollAndZoomIntoView(figma.currentPage.children);
 }
