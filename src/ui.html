@@ -17,7 +17,11 @@
   <p>Sections starting with "_" will be hidden in ToC</p>
   <ul></ul>
   <button class="add-button">➕</button>
-  <button class="ok-button">OK</button>
+  <hr>
+  <p>
+    <button class="ok-button">Refresh pages and ToC</button>
+    <span class="message"></span>
+  </p>
 
   <template id="item">
     <li>
@@ -27,19 +31,29 @@
   </template>
   
   <script>
-    const list = document.querySelector('ul');
-    const template = document.querySelector('template#item');
+    const listElement = document.querySelector('ul');
+    const templateElement = document.querySelector('template#item');
+    const messageElement = document.querySelector('.message');
 
     (function init() {
       this.onmessage = (message) => {
-        const existingSections = message.data.pluginMessage?.existingSections || [];
-        for (const title of existingSections) {
-          insertTitle(title);
+        const messageData = message.data.pluginMessage;
+
+        if (messageData.existingSections) {
+          const existingSections = messageData.existingSections || [];
+          for (const title of existingSections) {
+            insertTitle(title);
+          }
+        }
+
+        console.log('html', messageData)
+        if (messageData.error) {
+          messageElement.textContent = messageData.error;
         }
       };
 
       document.querySelector('.ok-button').addEventListener('click', () => {
-        const currentValues = Array.from(list.querySelectorAll('li')).map((item) => item.querySelector('input').value);
+        const currentValues = Array.from(listElement.querySelectorAll('li')).map((item) => item.querySelector('input').value);
         parent.postMessage({pluginMessage: currentValues}, '*');
       });
 
@@ -49,12 +63,12 @@
     })();
 
     function insertTitle(title) {
-      const item = template.content.cloneNode(true).querySelector('li');
+      const item = templateElement.content.cloneNode(true).querySelector('li');
       item.querySelector('input').value = title;
       item.querySelector('button').addEventListener('click', () => {
-        list.removeChild(item);
+        listElement.removeChild(item);
       });
-      list.append(item);
+      listElement.append(item);
     }
   </script>
 </body>

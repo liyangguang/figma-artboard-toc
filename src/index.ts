@@ -15,8 +15,13 @@ import {focusToPage} from './helpers';
     figma.ui.postMessage({existingSections: existingSections.length ? existingSections : DEFAULT_SECTION_TITLES});
 
     figma.ui.onmessage = (message) => {
-      console.log(message);
-      createAndUpdate(message);
+      try {
+        createAndUpdate(message);
+        figma.closePlugin();
+      } catch (error) {
+        console.log(error.message)
+        figma.ui.postMessage({error: error.message});
+      }
     }
   } catch (error) {
     console.error(error);
