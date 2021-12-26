@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToC+ UI</title>
+  <style>
+
+  </style>
+</head>
+<body>
+  <h1>ToC+</h1>
+  <p>Generate pages organization and create clickable table-of-contents.</p>
+  <p>Re-run it anytime to update your ToC.</p>
+  <h2>List of page sections</h2>
+  <p>Sections starting with "_" will be hidden in ToC</p>
+  <ul></ul>
+  <button class="add-button">➕</button>
+  <hr>
+  <p>
+    <button class="ok-button">Refresh pages and ToC</button>
+    <span class="message"></span>
+  </p>
+
+  <template id="item">
+    <li>
+      <input type="text">
+      <button>❌</button>
+    </li>
+  </template>
+  
+  <script>
+    const listElement = document.querySelector('ul');
+    const templateElement = document.querySelector('template#item');
+    const messageElement = document.querySelector('.message');
+
+    (function init() {
+      this.onmessage = (message) => {
+        // The data's interface is `PostMessageData` in index.ts.
+        const messageData = message.data.pluginMessage;
+
+        if (messageData.initialSectionTitles) {
+          const initialSectionTitles = messageData.initialSectionTitles || [];
+          for (const title of initialSectionTitles) {
+            insertTitle(title);
+          }
+        }
+
+        console.log('html', messageData)
+        if (messageData.error) {
+          messageElement.textContent = messageData.error;
+        }
+      };
+
+      document.querySelector('.ok-button').addEventListener('click', () => {
+        const currentValues = Array.from(listElement.querySelectorAll('li')).map((item) => item.querySelector('input').value);
+        parent.postMessage({pluginMessage: currentValues}, '*');
+      });
+
+      document.querySelector('.add-button').addEventListener('click', () => {
+        insertTitle('');
+      });
+    })();
+
+    function insertTitle(title) {
+      const item = templateElement.content.cloneNode(true).querySelector('li');
+      item.querySelector('input').value = title;
+      item.querySelector('button').addEventListener('click', () => {
+        listElement.removeChild(item);
+      });
+      listElement.append(item);
+    }
+  </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
-  "name": "figma-artboard-toc",
+  "name": "figma-toc-plus",
   "version": "1.0.0",
-  "description": "A Figma plugin that generates Table of content of all artboards on all pages",
+  "description": "A Figma plugin that generates pages by sections, and table-of-content of all sections + pages + artboards, with links to them.",
   "scripts": {
     "start": "rollup -c --watch",
     "build": "rollup -c"
