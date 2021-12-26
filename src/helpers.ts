@@ -9,6 +9,11 @@ export function createPage(name: string, checkExisting = true): PageNode {
   return page;
 }
 
+export function movePage(page: string|PageNode, index: number): void {
+  const pageNode = typeof page === 'string' ? findChildByName(page) : page;
+  figma.root.insertChild(index, pageNode);
+}
+
 export function findChildByName(name: string, parent = figma.root) {
   return parent.findChild((node) => node.name === name);
 }

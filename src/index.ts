@@ -1,23 +1,22 @@
-import {FONTS_MAP, TOC_PAGE_NAME} from './STATIC_DATA';
+import {FONTS_MAP, TOC_PAGE_NAME, DEFAULT_SECTION_TITLES} from './STATIC_DATA';
 import {renderToc} from './toc';
 import {renderCover} from './cover';
-import {createPageSections} from './page_sections';
+import {createPageSections, parseExistingPages} from './page_sections';
 import {focusToPage} from './helpers';
-
-const PAGE_SECTION_TITLES = [
-  '🟢 Ready',
-  '🟣 Work in progress',
-  '🔵 Research',
-  '_🟠 Sand box',
-];
 
 (async function start() {
   await Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font)));
 
   try {
-    createPageSections(PAGE_SECTION_TITLES);
+    const existingSections = parseExistingPages();
+    const sectionsToUse = existingSections.length ? existingSections : DEFAULT_SECTION_TITLES;
+
+    // TODO: Add an UI to edit those
+    console.log(sectionsToUse);
+
+    createPageSections(sectionsToUse);
     renderCover();
-    renderToc(PAGE_SECTION_TITLES);
+    renderToc(sectionsToUse);
   
     focusToPage(TOC_PAGE_NAME)
   } catch (error) {
