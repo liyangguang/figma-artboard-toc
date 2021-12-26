@@ -2,6 +2,8 @@
 
 A figma plugin to help designers and viewers organize and navigate Figma files.
 
+![example](./example.png)
+
 ## Features
 
 - Generate pages by sections in one-click
