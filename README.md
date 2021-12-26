@@ -1,4 +1,4 @@
-# ToC+
+# Figma Plugin - ToC+
 
 A figma plugin to:
 - Generate pages by sections
