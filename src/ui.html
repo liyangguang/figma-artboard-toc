@@ -37,11 +37,12 @@
 
     (function init() {
       this.onmessage = (message) => {
+        // The data's interface is `PostMessageData` in index.ts.
         const messageData = message.data.pluginMessage;
 
-        if (messageData.existingSections) {
-          const existingSections = messageData.existingSections || [];
-          for (const title of existingSections) {
+        if (messageData.initialSectionTitles) {
+          const initialSectionTitles = messageData.initialSectionTitles || [];
+          for (const title of initialSectionTitles) {
             insertTitle(title);
           }
         }
