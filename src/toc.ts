@@ -1,4 +1,4 @@
-import {SUMMARY_PAGE_NAME, INDENTATION_WIDTH} from './styles';
+import {SUMMARY_PAGE_NAME, FONT_SIZE_BASE, INDENTATION_WIDTH} from './styles';
 import {appendFrame, appendTextNode, getStartPage} from './helpers';
 
 const TOC_FRAME_NAME = 'Table of contents';
@@ -15,6 +15,10 @@ export function renderToc(x: number, y: number): FrameNode {
   const newTocFrame = appendFrame(startPage, TOC_FRAME_NAME, true);
   newTocFrame.x = x;
   newTocFrame.y = y;
+
+  const note = appendTextNode(newTocFrame, 'Click on items to go to pages (bold) and artboards');
+  note.fontSize = FONT_SIZE_BASE * .6;
+
   renderTocContent(newTocFrame);
 
   return newTocFrame;
