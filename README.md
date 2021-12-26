@@ -1,8 +1,19 @@
 # Figma Plugin - ToC+
 
-A figma plugin to:
-- Generate pages by sections
-- Generate table-of-contents of section > page > artboard, with links directly to the item
+A figma plugin to help designers and viewers organize and navigate Figma files.
+
+## Features
+
+- Generate pages by sections in one-click
+  - Customizable section names.
+  - Parse existing file page sections, and saves previously used sections.
+  - Allow hiding certain sections/pages/artboards from the ToC by starting the name with `_`.
+- Generate table-of-contents
+  - Organized by section > page > artboard.
+  - Each page/artboard is clickable, links directly to that item.
+  - Re-run anytime to fresh.
+- Placeholder cover page
+  - "Last updated" auto updates whenever the plugin runs.
 
 ## Load the plugin manually
 

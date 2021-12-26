@@ -4,9 +4,16 @@ import {renderCover} from './cover';
 import {createPageSections, parseExistingPages} from './page_sections';
 import {focusToPage} from './helpers';
 
+enum LoadType {
+  SAVED = 'SAVED',
+  DEFAULT = 'DEFAULT',
+  PARSED = 'PARSED',
+}
+
 interface PostMessageData {
-  initialSectionTitles?: string[];
+  titles?: string[];
   error?: string;
+  loadTitles?: LoadType;
 }
 
 const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
@@ -15,18 +22,21 @@ const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
   await Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font.fontName)));
 
   try {
-    const existingSections = parseExistingPages();
+    figma.showUI(__html__, {width: 320, height: 400});
 
-    figma.showUI(__html__, {width: 360, height: 500});
+    const initialTitles = await getTitles(LoadType.PARSED, true);
+    figma.ui.postMessage({titles: initialTitles} as PostMessageData);
 
-    const initialSectionTitles = await getInitialTitleList(existingSections);
-
-    figma.ui.postMessage({initialSectionTitles} as PostMessageData);
-
-    figma.ui.onmessage = (message) => {
+    figma.ui.onmessage = async (message: PostMessageData) => {
       try {
-        createAndUpdate(message);
-        figma.closePlugin();
+        if (message.titles) {
+          createAndUpdate(message.titles || []);
+          figma.closePlugin();
+        }
+
+        if (message.loadTitles) {
+          figma.ui.postMessage({titles: await getTitles(message.loadTitles)} as PostMessageData);
+        }
       } catch (error) {
         console.log(error.message)
         figma.ui.postMessage({error: error.message} as PostMessageData);
@@ -47,15 +57,18 @@ function createAndUpdate(sectionTitles: string[]): void {
   figma.clientStorage.setAsync(CLIENT_STORAGE_SECTIONS_KEY, validTitles);
 }
 
-async function getInitialTitleList(existingSections: string[]): Promise<string[]> {
-  if (cleanTitles(existingSections)?.length) return cleanTitles(existingSections);
-
-  const savedValue = await figma.clientStorage.getAsync(CLIENT_STORAGE_SECTIONS_KEY);
-  if (cleanTitles(savedValue)) return cleanTitles(savedValue);
-
-  return cleanTitles(DEFAULT_SECTION_TITLES);
+async function getTitles(loadType: LoadType, withFallback = false): Promise<string[]> {
+  switch (loadType) {
+    case LoadType.DEFAULT: return DEFAULT_SECTION_TITLES;
+    case LoadType.PARSED:
+      const parsedSections = cleanTitles(parseExistingPages());
+      return parsedSections?.length || !withFallback ? parsedSections : DEFAULT_SECTION_TITLES;
+    case LoadType.SAVED:
+      const savedValue = cleanTitles(await figma.clientStorage.getAsync(CLIENT_STORAGE_SECTIONS_KEY));
+      return savedValue?.length || !withFallback ? savedValue : DEFAULT_SECTION_TITLES;
+  }
 }
 
-function cleanTitles(titles: string[]): string[] {
+function cleanTitles(titles: string[] = []): string[] {
   return titles.map((title) => title.trim()).filter(String);
 }

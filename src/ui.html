@@ -22,12 +22,19 @@
       background: transparent;
       border: 0;
       border-radius: .5em;
+      border: 1px solid #ddd;
       cursor: pointer;
+      transition: box-shadow .2s ease;
+      font-size: .8em;
+    }
+
+    button:hover {
+      box-shadow: 1px 2px 6px #0005;
     }
 
     body {
       height: 100%;
-      padding: 1em;
+      padding: .5em;
       display: flex;
       flex-direction: column;
       font-family: 'Open Sans', sans-serif;
@@ -37,6 +44,7 @@
       flex: 1;
       padding-bottom: 1em;
       overflow: auto;
+      padding: 0.5em;
     }
 
     ul {
@@ -55,14 +63,14 @@
 
     .add-button {
       width: 100%;
-      border: 1px solid #aaa;
     }
 
     .ok-button {
-      width: 100%;
+      width: calc(100% - 1em);
       background: #18a0fb;
       color: white;
       padding: 0.3em;
+      margin: 0.5em;
     }
 
     hr {
@@ -70,12 +78,17 @@
     }
 
     h1 {
-      font-size: 1.2em;
+      font-size: 1.1em;
     }
 
-    h2 {
-      font-size: 1.1em;
-      margin-top: 1em;
+    .load-buttons {
+      display: flex;
+      gap: .5em;
+      margin: 1em 0;
+    }
+
+    .load-buttons button {
+      flex: 1;
     }
 
     .tip {
@@ -86,12 +99,16 @@
 </head>
 <body>
   <main>
-    <h1>ToC+</h1>
-    <p class="tip">Re-run it anytime to update your ToC.</p>
-    <h2>Page sections to create:</h2>
-    <p class="tip">Sections starting with "_" will be hidden in ToC</p>
+    <h1>Page sections:</h1>
+    <p class="tip">(Sections starting with "_" will be hidden in ToC)</p>
     <ul></ul>
     <button class="add-button">➕</button>
+    <div class="load-buttons">
+      Load:
+      <button class="load-button-last">Last used</button>
+      <button class="load-button-default">Default</button>
+      <button class="load-button-current">Current</button>
+    </div>
   </main>
   <hr>
   <p>
@@ -116,9 +133,9 @@
         // The data's interface is `PostMessageData` in index.ts.
         const messageData = message.data.pluginMessage;
 
-        if (messageData.initialSectionTitles) {
-          const initialSectionTitles = messageData.initialSectionTitles || [];
-          for (const title of initialSectionTitles) {
+        if (messageData.titles) {
+          listElement.innerHTML = '';
+          for (const title of messageData.titles) {
             insertTitle(title);
           }
         }
@@ -131,7 +148,19 @@
 
       document.querySelector('.ok-button').addEventListener('click', () => {
         const currentValues = Array.from(listElement.querySelectorAll('li')).map((item) => item.querySelector('input').value.trim()).filter(String);
-        parent.postMessage({pluginMessage: currentValues}, '*');
+        parent.postMessage({pluginMessage: {titles: currentValues}}, '*');
+      });
+
+      document.querySelector('.load-button-default').addEventListener('click', () => {
+        parent.postMessage({pluginMessage: {loadTitles: 'DEFAULT'}}, '*');
+      });
+
+      document.querySelector('.load-button-last').addEventListener('click', () => {
+        parent.postMessage({pluginMessage: {loadTitles: 'SAVED'}}, '*');
+      });
+
+      document.querySelector('.load-button-current').addEventListener('click', () => {
+        parent.postMessage({pluginMessage: {loadTitles: 'PARSED'}}, '*');
       });
 
       document.querySelector('.add-button').addEventListener('click', () => {

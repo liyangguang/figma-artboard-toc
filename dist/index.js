@@ -36,7 +36,7 @@ const DEFAULT_SECTION_TITLES = [
     '🏁 Ready',
     '✏️ Work in progress',
     '🔎 Research',
-    '_💡 Ideas',
+    '_💡 Ideas (hidden in ToC)',
 ];
 // Styles
 const FONT_SIZE_BASE = 14;
@@ -113,11 +113,12 @@ function renderToc(sectionTitles) {
         appendTextNode(newTocFrame, `All page sections are created. Now it's design time!`);
         appendTextNode(newTocFrame, `Use the pages with arrow prefix for your design. You can add/remove those pages as well.`);
         appendTextNode(newTocFrame, `Your page names and artboard names will be used on the ToC.`);
+        appendTextNode(newTocFrame, 'Re-run ToC+ anytime to refresh ToC.');
     }
     else {
         appendTextNode(newTocFrame, `Click on each item to go to the page/artboard`, null, FontEnum.NOTE);
+        appendTextNode(newTocFrame, 'Re-run ToC+ anytime to refresh ToC.', null, FontEnum.NOTE);
     }
-    appendTextNode(newTocFrame, 'Re-run ToC+ anytime to refresh ToC.', null, FontEnum.NOTE);
     return newTocFrame;
 }
 function renderTocContent(tocFrame, sectionTitles) {
@@ -265,25 +266,35 @@ function insertSections(sectionTitle) {
     }
 }
 
+var LoadType;
+(function (LoadType) {
+    LoadType["SAVED"] = "SAVED";
+    LoadType["DEFAULT"] = "DEFAULT";
+    LoadType["PARSED"] = "PARSED";
+})(LoadType || (LoadType = {}));
 const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
 (function init() {
     return __awaiter(this, void 0, void 0, function* () {
         yield Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font.fontName)));
         try {
-            const existingSections = parseExistingPages();
-            figma.showUI(__html__, { width: 360, height: 500 });
-            const initialSectionTitles = yield getInitialTitleList(existingSections);
-            figma.ui.postMessage({ initialSectionTitles });
-            figma.ui.onmessage = (message) => {
+            figma.showUI(__html__, { width: 320, height: 400 });
+            const initialTitles = yield getTitles(LoadType.PARSED, true);
+            figma.ui.postMessage({ titles: initialTitles });
+            figma.ui.onmessage = (message) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    createAndUpdate(message);
-                    figma.closePlugin();
+                    if (message.titles) {
+                        createAndUpdate(message.titles || []);
+                        figma.closePlugin();
+                    }
+                    if (message.loadTitles) {
+                        figma.ui.postMessage({ titles: yield getTitles(message.loadTitles) });
+                    }
                 }
                 catch (error) {
                     console.log(error.message);
                     figma.ui.postMessage({ error: error.message });
                 }
-            };
+            });
         }
         catch (error) {
             console.error(error);
@@ -298,17 +309,19 @@ function createAndUpdate(sectionTitles) {
     focusToPage(TOC_PAGE_NAME);
     figma.clientStorage.setAsync(CLIENT_STORAGE_SECTIONS_KEY, validTitles);
 }
-function getInitialTitleList(existingSections) {
-    var _a;
+function getTitles(loadType, withFallback = false) {
     return __awaiter(this, void 0, void 0, function* () {
-        if ((_a = cleanTitles(existingSections)) === null || _a === void 0 ? void 0 : _a.length)
-            return cleanTitles(existingSections);
-        const savedValue = yield figma.clientStorage.getAsync(CLIENT_STORAGE_SECTIONS_KEY);
-        if (cleanTitles(savedValue))
-            return cleanTitles(savedValue);
-        return cleanTitles(DEFAULT_SECTION_TITLES);
+        switch (loadType) {
+            case LoadType.DEFAULT: return DEFAULT_SECTION_TITLES;
+            case LoadType.PARSED:
+                const parsedSections = cleanTitles(parseExistingPages());
+                return (parsedSections === null || parsedSections === void 0 ? void 0 : parsedSections.length) || !withFallback ? parsedSections : DEFAULT_SECTION_TITLES;
+            case LoadType.SAVED:
+                const savedValue = cleanTitles(yield figma.clientStorage.getAsync(CLIENT_STORAGE_SECTIONS_KEY));
+                return (savedValue === null || savedValue === void 0 ? void 0 : savedValue.length) || !withFallback ? savedValue : DEFAULT_SECTION_TITLES;
+        }
     });
 }
-function cleanTitles(titles) {
+function cleanTitles(titles = []) {
     return titles.map((title) => title.trim()).filter(String);
 }

@@ -10,7 +10,7 @@ export const DEFAULT_SECTION_TITLES = [
   '🏁 Ready',
   '✏️ Work in progress',
   '🔎 Research',
-  '_💡 Ideas',
+  '_💡 Ideas (hidden in ToC)',
 ];
 
 // Styles

@@ -19,10 +19,11 @@ export function renderToc(sectionTitles: string[]): FrameNode {
     appendTextNode(newTocFrame, `All page sections are created. Now it's design time!`);
     appendTextNode(newTocFrame, `Use the pages with arrow prefix for your design. You can add/remove those pages as well.`);
     appendTextNode(newTocFrame, `Your page names and artboard names will be used on the ToC.`);
+    appendTextNode(newTocFrame, 'Re-run ToC+ anytime to refresh ToC.');
   } else {
     appendTextNode(newTocFrame, `Click on each item to go to the page/artboard`, null, FontEnum.NOTE);
+    appendTextNode(newTocFrame, 'Re-run ToC+ anytime to refresh ToC.', null, FontEnum.NOTE);
   }
-  appendTextNode(newTocFrame, 'Re-run ToC+ anytime to refresh ToC.', null, FontEnum.NOTE);
 
   return newTocFrame;
 }
