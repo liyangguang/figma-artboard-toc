@@ -2,6 +2,8 @@
 
 A figma plugin to help designers and viewers organize and navigate Figma files.
 
+Link: https://www.figma.com/community/plugin/1037946448690949150
+
 ![example](./example.png)
 
 ## Features

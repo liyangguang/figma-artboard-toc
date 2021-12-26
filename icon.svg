@@ -1,0 +1,16 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="128" height="128" fill="white"/>
+<rect width="128" height="128" rx="10" fill="#29B2FF"/>
+<rect x="27" y="31" width="10" height="10" rx="5" fill="white"/>
+<rect x="44" y="31" width="56" height="10" rx="5" fill="white"/>
+<rect x="53" y="50" width="47" height="10" rx="5" fill="white"/>
+<rect x="53" y="69" width="47" height="10" rx="5" fill="white"/>
+<rect x="44" y="88" width="56" height="10" rx="5" fill="white"/>
+<rect x="36" y="50" width="10" height="10" rx="5" fill="white"/>
+<rect x="36" y="69" width="10" height="10" rx="5" fill="white"/>
+<rect x="27" y="88" width="10" height="10" rx="5" fill="white"/>
+<path d="M93.0011 71.4145L66.6304 58.4979L72.636 86.9792L78.2659 77.9624L85.1353 86.854L89.8204 83.3469L82.9511 74.4553L93.0011 71.4145Z" stroke="black" stroke-width="4" stroke-linejoin="round"/>
+<line x1="49.8211" y1="58.0849" x2="55.7182" y2="58.2535" stroke="black" stroke-width="4" stroke-linecap="round"/>
+<line x1="55.4359" y1="45.1744" x2="59.3071" y2="49.6262" stroke="black" stroke-width="4" stroke-linecap="round"/>
+<line x1="69.4358" y1="42.6037" x2="68.9273" y2="48.4812" stroke="black" stroke-width="4" stroke-linecap="round"/>
+</svg>
