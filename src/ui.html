@@ -4,22 +4,98 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
   <title>ToC+ UI</title>
   <style>
+    * {
+      margin: 0;
+      box-sizing: border-box;
+    }
 
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      background: transparent;
+      border: 0;
+      border-radius: .5em;
+      cursor: pointer;
+    }
+
+    body {
+      height: 100%;
+      padding: 1em;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    main {
+      flex: 1;
+      padding-bottom: 1em;
+      overflow: auto;
+    }
+
+    ul {
+      padding: 0;
+    }
+
+    li {
+      display: flex;
+      margin: .5em 0;
+    }
+
+    input {
+      flex: 1;
+      margin-right: .5em;
+    }
+
+    .add-button {
+      width: 100%;
+      border: 1px solid #aaa;
+    }
+
+    .ok-button {
+      width: 100%;
+      background: #18a0fb;
+      color: white;
+      padding: 0.3em;
+    }
+
+    hr {
+      margin: 0.5em;
+    }
+
+    h1 {
+      font-size: 1.2em;
+    }
+
+    h2 {
+      font-size: 1.1em;
+      margin-top: 1em;
+    }
+
+    .tip {
+      font-size: 0.8em;
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
-  <h1>ToC+</h1>
-  <p>Generate pages organization and create clickable table-of-contents.</p>
-  <p>Re-run it anytime to update your ToC.</p>
-  <h2>List of page sections</h2>
-  <p>Sections starting with "_" will be hidden in ToC</p>
-  <ul></ul>
-  <button class="add-button">➕</button>
+  <main>
+    <h1>ToC+</h1>
+    <p class="tip">Re-run it anytime to update your ToC.</p>
+    <h2>Page sections to create:</h2>
+    <p class="tip">Sections starting with "_" will be hidden in ToC</p>
+    <ul></ul>
+    <button class="add-button">➕</button>
+  </main>
   <hr>
   <p>
-    <button class="ok-button">Refresh pages and ToC</button>
+    <button class="ok-button">Refresh sections and ToC</button>
     <span class="message"></span>
   </p>
 
@@ -54,7 +130,7 @@
       };
 
       document.querySelector('.ok-button').addEventListener('click', () => {
-        const currentValues = Array.from(listElement.querySelectorAll('li')).map((item) => item.querySelector('input').value);
+        const currentValues = Array.from(listElement.querySelectorAll('li')).map((item) => item.querySelector('input').value.trim()).filter(String);
         parent.postMessage({pluginMessage: currentValues}, '*');
       });
 

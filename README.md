@@ -22,6 +22,7 @@ This is only needed before the plugin is published, or you want to run a modifie
   - All the `.ts` files for the code part.
   - DO NOT modify files under `/dist`, those are generated files, and will be overwritten everytime you compile.
 - Bundled using `rollup.js`: (After editing source code, you must run either of these)
+  - Install all dependencies (only for the 1st time) `npm install`.
   - Compile TS with auto re-run on saving: `npm start`.
   - Compile TS once: `npm build`.
 - Final code:

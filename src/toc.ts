@@ -1,4 +1,4 @@
-import {PAGE_NAMES_TO_IGNORE, INDENTATION_WIDTH, TOC_PAGE_NAME, PAGE_PREFIX} from './STATIC_DATA';
+import {PAGE_NAMES_TO_IGNORE, INDENTATION_WIDTH, TOC_PAGE_NAME, PAGE_PREFIX, FontEnum} from './STATIC_DATA';
 import {appendFrame, appendTextNode, findChildByName} from './helpers';
 
 const TOC_FRAME_NAME = 'table of contents';
@@ -15,10 +15,14 @@ export function renderToc(sectionTitles: string[]): FrameNode {
   renderTocContent(newTocFrame, sectionTitles);
 
   if (!newTocFrame.children.length) {
-    appendTextNode(newTocFrame, 'Table of contents is empty', null, true);
-    appendTextNode(newTocFrame, `All pages are created. Now it's design time!`);
-    appendTextNode(newTocFrame, 'Run the plugin again anytime to refresh this ToC, and the last updated time in the cover.');
+    appendTextNode(newTocFrame, 'No ToC. All your pages are empty', null, FontEnum.TITLE);
+    appendTextNode(newTocFrame, `All page sections are created. Now it's design time!`);
+    appendTextNode(newTocFrame, `Use the pages with arrow prefix for your design. You can add/remove those pages as well.`);
+    appendTextNode(newTocFrame, `Your page names and artboard names will be used on the ToC.`);
+  } else {
+    appendTextNode(newTocFrame, `Click on each item to go to the page/artboard`, null, FontEnum.NOTE);
   }
+  appendTextNode(newTocFrame, 'Re-run ToC+ anytime to refresh ToC.', null, FontEnum.NOTE);
 
   return newTocFrame;
 }
@@ -34,7 +38,7 @@ function renderTocContent(tocFrame: FrameNode, sectionTitles: string[]): void {
 
     // Add section frame and title
     const sectionFrame = appendFrame(tocFrame, `${section.title} section`, true);
-    appendTextNode(sectionFrame, section.title, null, true);
+    appendTextNode(sectionFrame, section.title, null, FontEnum.TITLE);
 
     for (const page of nonHiddenPagesInThisSection) {
       // Ignore empty page, and pages under hidden sections

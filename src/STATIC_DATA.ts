@@ -19,11 +19,18 @@ export const INDENTATION_WIDTH = FONT_SIZE_BASE * 2;
 export const COVER_SIZE = [1920, 1080];
 
 export enum FontEnum {
-  REGULAR,
-  BOLD,
+  NORMAL,
+  TITLE,
+  NOTE,
 }
 
-export const FONTS_MAP = new Map<FontEnum, FontName>([
-  [FontEnum.REGULAR, {family: 'Roboto', style: 'Regular'}],
-  [FontEnum.BOLD, {family: 'Roboto', style: 'Bold'}],
+interface Font {
+  fontName: FontName;
+  fontSize: number;
+}
+
+export const FONTS_MAP = new Map<FontEnum, Font>([
+  [FontEnum.NORMAL, {fontSize: FONT_SIZE_BASE, fontName: {family: 'Roboto', style: 'Regular'}}],
+  [FontEnum.TITLE, {fontSize: FONT_SIZE_BASE * 1.2, fontName: {family: 'Roboto', style: 'Bold'}}],
+  [FontEnum.NOTE, {fontSize: FONT_SIZE_BASE * .8, fontName: {family: 'Roboto', style: 'Regular'}}],
 ]);

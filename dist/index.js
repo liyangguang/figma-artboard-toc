@@ -43,12 +43,14 @@ const FONT_SIZE_BASE = 14;
 const INDENTATION_WIDTH = FONT_SIZE_BASE * 2;
 var FontEnum;
 (function (FontEnum) {
-    FontEnum[FontEnum["REGULAR"] = 0] = "REGULAR";
-    FontEnum[FontEnum["BOLD"] = 1] = "BOLD";
+    FontEnum[FontEnum["NORMAL"] = 0] = "NORMAL";
+    FontEnum[FontEnum["TITLE"] = 1] = "TITLE";
+    FontEnum[FontEnum["NOTE"] = 2] = "NOTE";
 })(FontEnum || (FontEnum = {}));
 const FONTS_MAP = new Map([
-    [FontEnum.REGULAR, { family: 'Roboto', style: 'Regular' }],
-    [FontEnum.BOLD, { family: 'Roboto', style: 'Bold' }],
+    [FontEnum.NORMAL, { fontSize: FONT_SIZE_BASE, fontName: { family: 'Roboto', style: 'Regular' } }],
+    [FontEnum.TITLE, { fontSize: FONT_SIZE_BASE * 1.2, fontName: { family: 'Roboto', style: 'Bold' } }],
+    [FontEnum.NOTE, { fontSize: FONT_SIZE_BASE * .8, fontName: { family: 'Roboto', style: 'Regular' } }],
 ]);
 
 function createPage(name, checkExisting = true) {
@@ -79,11 +81,12 @@ function appendFrame(parent, name, isAutoLayout = false) {
     parent.appendChild(frame);
     return frame;
 }
-function appendTextNode(parent, name, linkId = null, isLargerFont = false) {
+function appendTextNode(parent, name, linkId = null, font = FontEnum.NORMAL) {
     const textNode = figma.createText();
     textNode.characters = name.trim();
-    textNode.fontSize = FONT_SIZE_BASE * (isLargerFont ? 1.2 : 1);
-    textNode.fontName = FONTS_MAP.get(isLargerFont ? FontEnum.BOLD : FontEnum.REGULAR);
+    const fontValue = FONTS_MAP.get(font);
+    textNode.fontSize = fontValue.fontSize;
+    textNode.fontName = fontValue.fontName;
     if (linkId) {
         textNode.hyperlink = { type: 'NODE', value: linkId };
         textNode.textDecoration = 'UNDERLINE';
@@ -106,10 +109,15 @@ function renderToc(sectionTitles) {
     const newTocFrame = appendFrame(tocPage, TOC_FRAME_NAME, true);
     renderTocContent(newTocFrame, sectionTitles);
     if (!newTocFrame.children.length) {
-        appendTextNode(newTocFrame, 'Table of contents is empty', null, true);
-        appendTextNode(newTocFrame, `All pages are created. Now it's design time!`);
-        appendTextNode(newTocFrame, 'Run the plugin again anytime to refresh this ToC, and the last updated time in the cover.');
+        appendTextNode(newTocFrame, 'No ToC. All your pages are empty', null, FontEnum.TITLE);
+        appendTextNode(newTocFrame, `All page sections are created. Now it's design time!`);
+        appendTextNode(newTocFrame, `Use the pages with arrow prefix for your design. You can add/remove those pages as well.`);
+        appendTextNode(newTocFrame, `Your page names and artboard names will be used on the ToC.`);
     }
+    else {
+        appendTextNode(newTocFrame, `Click on each item to go to the page/artboard`, null, FontEnum.NOTE);
+    }
+    appendTextNode(newTocFrame, 'Re-run ToC+ anytime to refresh ToC.', null, FontEnum.NOTE);
     return newTocFrame;
 }
 function renderTocContent(tocFrame, sectionTitles) {
@@ -122,7 +130,7 @@ function renderTocContent(tocFrame, sectionTitles) {
             continue;
         // Add section frame and title
         const sectionFrame = appendFrame(tocFrame, `${section.title} section`, true);
-        appendTextNode(sectionFrame, section.title, null, true);
+        appendTextNode(sectionFrame, section.title, null, FontEnum.TITLE);
         for (const page of nonHiddenPagesInThisSection) {
             // Ignore empty page, and pages under hidden sections
             const artboardsInThisPage = page.children.filter((node) => node.type === 'FRAME' && !node.name.startsWith('_'));
@@ -168,7 +176,7 @@ function removeFrameWithoutChildren(node) {
 }
 
 const COVER_FRAME_NAME = 'cover';
-const LAST_UPDATED_NAME = 'Last updated';
+const LAST_UPDATED_NAME = 'Last updated (auto update by ToC+)';
 const COVER_DIMENSIONS = [1024, 576];
 const PADDING = 16;
 function renderCover() {
@@ -185,7 +193,7 @@ function renderCover() {
 function updateLastUpdated(frame) {
     const textNode = frame.findChild((node) => node.name === LAST_UPDATED_NAME) || appendTextNode(frame, LAST_UPDATED_NAME);
     textNode.name = LAST_UPDATED_NAME;
-    textNode.characters = `${LAST_UPDATED_NAME}: ${new Date().toLocaleDateString()}`;
+    textNode.characters = `Last updated: ${new Date().toLocaleDateString()}`;
     textNode.x = COVER_DIMENSIONS[0] - textNode.width - PADDING;
     textNode.y = COVER_DIMENSIONS[1] - textNode.height - PADDING;
 }
@@ -260,10 +268,10 @@ function insertSections(sectionTitle) {
 const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
 (function init() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font)));
+        yield Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font.fontName)));
         try {
             const existingSections = parseExistingPages();
-            figma.showUI(__html__);
+            figma.showUI(__html__, { width: 360, height: 500 });
             const initialSectionTitles = yield getInitialTitleList(existingSections);
             figma.ui.postMessage({ initialSectionTitles });
             figma.ui.onmessage = (message) => {
@@ -283,19 +291,24 @@ const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
     });
 })();
 function createAndUpdate(sectionTitles) {
-    createPageSections(sectionTitles);
+    const validTitles = cleanTitles(sectionTitles);
+    createPageSections(validTitles);
     renderCover();
-    renderToc(sectionTitles);
+    renderToc(validTitles);
     focusToPage(TOC_PAGE_NAME);
-    figma.clientStorage.setAsync(CLIENT_STORAGE_SECTIONS_KEY, sectionTitles);
+    figma.clientStorage.setAsync(CLIENT_STORAGE_SECTIONS_KEY, validTitles);
 }
 function getInitialTitleList(existingSections) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        if (existingSections === null || existingSections === void 0 ? void 0 : existingSections.length)
-            return existingSections;
+        if ((_a = cleanTitles(existingSections)) === null || _a === void 0 ? void 0 : _a.length)
+            return cleanTitles(existingSections);
         const savedValue = yield figma.clientStorage.getAsync(CLIENT_STORAGE_SECTIONS_KEY);
-        if (savedValue)
-            return savedValue;
-        return DEFAULT_SECTION_TITLES;
+        if (cleanTitles(savedValue))
+            return cleanTitles(savedValue);
+        return cleanTitles(DEFAULT_SECTION_TITLES);
     });
+}
+function cleanTitles(titles) {
+    return titles.map((title) => title.trim()).filter(String);
 }

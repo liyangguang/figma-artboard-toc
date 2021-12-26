@@ -32,11 +32,14 @@ export function appendFrame(parent: FrameNode|PageNode, name: string, isAutoLayo
   return frame
 }
 
-export function appendTextNode(parent: FrameNode|PageNode, name: string, linkId: string|null = null, isLargerFont = false): TextNode {
+export function appendTextNode(parent: FrameNode|PageNode, name: string, linkId: string|null = null, font = FontEnum.NORMAL): TextNode {
   const textNode = figma.createText();
   textNode.characters = name.trim();
-  textNode.fontSize = FONT_SIZE_BASE * (isLargerFont ? 1.2 : 1);
-  textNode.fontName = FONTS_MAP.get(isLargerFont ? FontEnum.BOLD : FontEnum.REGULAR);
+
+  const fontValue = FONTS_MAP.get(font);
+  textNode.fontSize = fontValue.fontSize;
+  textNode.fontName = fontValue.fontName;
+
   if (linkId) {
     textNode.hyperlink = {type: 'NODE', value: linkId};
     textNode.textDecoration = 'UNDERLINE';
