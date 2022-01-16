@@ -10,11 +10,25 @@ enum LoadType {
   PARSED = 'PARSED',
 }
 
-interface PostMessageData {
-  titles?: string[];
-  error?: string;
-  loadTitles?: LoadType;
+interface UpdateIncomingMessageData {
+  titles: string[];
+  includePrefix: string;
+  excludePrefix: string;
 }
+
+interface LoadTitleIncomingMessageData {
+  loadTitles: LoadType;
+}
+
+interface LoadTitleOutgoingMessageData {
+  titles: string[];
+}
+
+interface ErrorOutgoingMessageData {
+  error: string;
+}
+
+type IncomingMessageData = UpdateIncomingMessageData | LoadTitleIncomingMessageData;
 
 const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
 
@@ -22,24 +36,24 @@ const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
   await Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font.fontName)));
 
   try {
-    figma.showUI(__html__, {width: 320, height: 400});
+    figma.showUI(__html__, {width: 420, height: 500});
 
     const initialTitles = await getTitles(LoadType.PARSED, true);
-    figma.ui.postMessage({titles: initialTitles} as PostMessageData);
+    figma.ui.postMessage({titles: initialTitles} as LoadTitleOutgoingMessageData);
 
-    figma.ui.onmessage = async (message: PostMessageData) => {
+    figma.ui.onmessage = async (message: IncomingMessageData) => {
       try {
-        if (message.titles) {
-          createAndUpdate(message.titles || []);
+        if (checkIsUpdateMessage(message)) {
+          createAndUpdate(message.titles || [], message.includePrefix, message.excludePrefix);
           figma.closePlugin();
         }
 
-        if (message.loadTitles) {
-          figma.ui.postMessage({titles: await getTitles(message.loadTitles)} as PostMessageData);
+        if (checkIsLoadTitleMessage(message)) {
+          figma.ui.postMessage({titles: await getTitles(message.loadTitles)} as LoadTitleOutgoingMessageData);
         }
       } catch (error) {
-        console.log(error.message)
-        figma.ui.postMessage({error: error.message} as PostMessageData);
+        console.error(error.message)
+        figma.ui.postMessage({error: error.message} as ErrorOutgoingMessageData);
       }
     }
   } catch (error) {
@@ -47,11 +61,19 @@ const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
   }
 })();
 
-function createAndUpdate(sectionTitles: string[]): void {
+function checkIsLoadTitleMessage(message: IncomingMessageData): message is LoadTitleIncomingMessageData {
+  return !!(message as LoadTitleIncomingMessageData).loadTitles;
+}
+
+function checkIsUpdateMessage(message: IncomingMessageData): message is UpdateIncomingMessageData {
+  return !!(message as UpdateIncomingMessageData).titles;
+}
+
+function createAndUpdate(sectionTitles: string[], includePrefix = '', excludePrefix = ''): void {
   const validTitles = cleanTitles(sectionTitles);
   createPageSections(validTitles);
   renderCover();
-  renderToc(validTitles);
+  renderToc(validTitles, includePrefix, excludePrefix);
 
   focusToPage(TOC_PAGE_NAME);
   figma.clientStorage.setAsync(CLIENT_STORAGE_SECTIONS_KEY, validTitles);

@@ -100,14 +100,14 @@ function focusToPage(name) {
 }
 
 const TOC_FRAME_NAME = 'table of contents';
-function renderToc(sectionTitles) {
+function renderToc(sectionTitles, includePrefix = '', excludePrefix = '') {
     const tocPage = findChildByName(TOC_PAGE_NAME);
     const tocFrame = tocPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME);
     if (tocFrame) {
         tocFrame.remove();
     }
     const newTocFrame = appendFrame(tocPage, TOC_FRAME_NAME, true);
-    renderTocContent(newTocFrame, sectionTitles);
+    renderTocContent(newTocFrame, sectionTitles, includePrefix, excludePrefix);
     if (!newTocFrame.children.length) {
         appendTextNode(newTocFrame, 'No ToC. All your pages are empty', null, FontEnum.TITLE);
         appendTextNode(newTocFrame, `All page sections are created. Now it's design time!`);
@@ -121,12 +121,12 @@ function renderToc(sectionTitles) {
     }
     return newTocFrame;
 }
-function renderTocContent(tocFrame, sectionTitles) {
+function renderTocContent(tocFrame, sectionTitles, includePrefix = '', excludePrefix = '') {
     const sections = groupsPagesIntoSections(sectionTitles);
     for (const section of sections) {
-        if (section.title.startsWith('_'))
+        if (excludePrefix && section.title.startsWith(excludePrefix))
             continue;
-        const nonHiddenPagesInThisSection = section.pages.filter((page) => !page.name.startsWith('_'));
+        const nonHiddenPagesInThisSection = section.pages.filter((page) => !excludePrefix || !page.name.startsWith(excludePrefix));
         if (!nonHiddenPagesInThisSection.length)
             continue;
         // Add section frame and title
@@ -134,7 +134,9 @@ function renderTocContent(tocFrame, sectionTitles) {
         appendTextNode(sectionFrame, section.title, null, FontEnum.TITLE);
         for (const page of nonHiddenPagesInThisSection) {
             // Ignore empty page, and pages under hidden sections
-            const artboardsInThisPage = page.children.filter((node) => node.type === 'FRAME' && !node.name.startsWith('_'));
+            const artboardsInThisPage = page.children.filter((node) => node.type === 'FRAME' &&
+                (!includePrefix || node.name.startsWith(includePrefix)) &&
+                (!excludePrefix || !node.name.startsWith(excludePrefix)));
             if (!artboardsInThisPage.length)
                 continue;
             // Add page frame and title
@@ -277,21 +279,21 @@ const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
     return __awaiter(this, void 0, void 0, function* () {
         yield Promise.all(Array.from(FONTS_MAP.values()).map((font) => figma.loadFontAsync(font.fontName)));
         try {
-            figma.showUI(__html__, { width: 320, height: 400 });
+            figma.showUI(__html__, { width: 420, height: 500 });
             const initialTitles = yield getTitles(LoadType.PARSED, true);
             figma.ui.postMessage({ titles: initialTitles });
             figma.ui.onmessage = (message) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    if (message.titles) {
-                        createAndUpdate(message.titles || []);
+                    if (checkIsUpdateMessage(message)) {
+                        createAndUpdate(message.titles || [], message.includePrefix, message.excludePrefix);
                         figma.closePlugin();
                     }
-                    if (message.loadTitles) {
+                    if (checkIsLoadTitleMessage(message)) {
                         figma.ui.postMessage({ titles: yield getTitles(message.loadTitles) });
                     }
                 }
                 catch (error) {
-                    console.log(error.message);
+                    console.error(error.message);
                     figma.ui.postMessage({ error: error.message });
                 }
             });
@@ -301,11 +303,17 @@ const CLIENT_STORAGE_SECTIONS_KEY = 'sections';
         }
     });
 })();
-function createAndUpdate(sectionTitles) {
+function checkIsLoadTitleMessage(message) {
+    return !!message.loadTitles;
+}
+function checkIsUpdateMessage(message) {
+    return !!message.titles;
+}
+function createAndUpdate(sectionTitles, includePrefix = '', excludePrefix = '') {
     const validTitles = cleanTitles(sectionTitles);
     createPageSections(validTitles);
     renderCover();
-    renderToc(validTitles);
+    renderToc(validTitles, includePrefix, excludePrefix);
     focusToPage(TOC_PAGE_NAME);
     figma.clientStorage.setAsync(CLIENT_STORAGE_SECTIONS_KEY, validTitles);
 }

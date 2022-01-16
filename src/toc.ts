@@ -3,7 +3,7 @@ import {appendFrame, appendTextNode, findChildByName} from './helpers';
 
 const TOC_FRAME_NAME = 'table of contents';
 
-export function renderToc(sectionTitles: string[]): FrameNode {
+export function renderToc(sectionTitles: string[], includePrefix = '', excludePrefix = ''): FrameNode {
   const tocPage = findChildByName(TOC_PAGE_NAME);
 
   const tocFrame = tocPage.findChild((node) => node.type === 'FRAME' && node.name === TOC_FRAME_NAME) as FrameNode;
@@ -12,7 +12,7 @@ export function renderToc(sectionTitles: string[]): FrameNode {
   }  
 
   const newTocFrame = appendFrame(tocPage, TOC_FRAME_NAME, true);
-  renderTocContent(newTocFrame, sectionTitles);
+  renderTocContent(newTocFrame, sectionTitles, includePrefix, excludePrefix);
 
   if (!newTocFrame.children.length) {
     appendTextNode(newTocFrame, 'No ToC. All your pages are empty', null, FontEnum.TITLE);
@@ -28,13 +28,13 @@ export function renderToc(sectionTitles: string[]): FrameNode {
   return newTocFrame;
 }
 
-function renderTocContent(tocFrame: FrameNode, sectionTitles: string[]): void {
+function renderTocContent(tocFrame: FrameNode, sectionTitles: string[], includePrefix = '', excludePrefix = ''): void {
   const sections = groupsPagesIntoSections(sectionTitles);
 
   for (const section of sections) {
-    if (section.title.startsWith('_')) continue;
+    if (excludePrefix && section.title.startsWith(excludePrefix)) continue;
 
-    const nonHiddenPagesInThisSection = section.pages.filter((page) => !page.name.startsWith('_'));
+    const nonHiddenPagesInThisSection = section.pages.filter((page) => !excludePrefix || !page.name.startsWith(excludePrefix));
     if (!nonHiddenPagesInThisSection.length) continue;
 
     // Add section frame and title
@@ -43,7 +43,9 @@ function renderTocContent(tocFrame: FrameNode, sectionTitles: string[]): void {
 
     for (const page of nonHiddenPagesInThisSection) {
       // Ignore empty page, and pages under hidden sections
-      const artboardsInThisPage = page.children.filter((node) => node.type === 'FRAME' && !node.name.startsWith('_'));
+      const artboardsInThisPage = page.children.filter((node) => node.type === 'FRAME' &&
+          (!includePrefix || node.name.startsWith(includePrefix)) &&
+          (!excludePrefix || !node.name.startsWith(excludePrefix)))
       if (!artboardsInThisPage.length) continue;
   
       // Add page frame and title

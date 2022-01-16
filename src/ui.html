@@ -47,11 +47,11 @@
       padding: 0.5em;
     }
 
-    ul {
+    .section-list {
       padding: 0;
     }
 
-    li {
+    .section-list li {
       display: flex;
       margin: .5em 0;
     }
@@ -91,17 +91,19 @@
       flex: 1;
     }
 
-    .tip {
+    .tweaks {
       font-size: 0.8em;
-      opacity: 0.8;
+    }
+
+    .tweaks input {
+      width: 2em;
     }
   </style>
 </head>
 <body>
   <main>
     <h1>Page sections:</h1>
-    <p class="tip">(Sections starting with "_" will be hidden in ToC)</p>
-    <ul></ul>
+    <ul class="section-list"></ul>
     <button class="add-button">➕</button>
     <div class="load-buttons">
       Load:
@@ -112,6 +114,15 @@
   </main>
   <hr>
   <p>
+    <h1>ToC filtering</h1>
+    <ul class="tweaks">
+      <li>
+        <label>Only include artboards with name starting with <input type="text" class="include-prefix"></label>
+      </li>
+      <li>
+        <label>Hide sections/pages/artboards with name starting with <input type="text" class="exclude-prefix" value="_"></label>
+      </li>
+    </ul>
     <button class="ok-button">Refresh sections and ToC</button>
     <span class="message"></span>
   </p>
@@ -124,9 +135,11 @@
   </template>
   
   <script>
-    const listElement = document.querySelector('ul');
+    const listElement = document.querySelector('.section-list');
     const templateElement = document.querySelector('template#item');
     const messageElement = document.querySelector('.message');
+    const includePrefixElement = document.querySelector('.include-prefix');
+    const excludePrefixElement = document.querySelector('.exclude-prefix');
 
     (function init() {
       this.onmessage = (message) => {
@@ -140,7 +153,6 @@
           }
         }
 
-        console.log('html', messageData)
         if (messageData.error) {
           messageElement.textContent = messageData.error;
         }
@@ -148,7 +160,7 @@
 
       document.querySelector('.ok-button').addEventListener('click', () => {
         const currentValues = Array.from(listElement.querySelectorAll('li')).map((item) => item.querySelector('input').value.trim()).filter(String);
-        parent.postMessage({pluginMessage: {titles: currentValues}}, '*');
+        parent.postMessage({pluginMessage: {titles: currentValues, includePrefix: includePrefixElement.value, excludePrefix: excludePrefixElement.value}}, '*');
       });
 
       document.querySelector('.load-button-default').addEventListener('click', () => {
